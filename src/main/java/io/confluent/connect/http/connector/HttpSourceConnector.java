@@ -3,34 +3,22 @@ package io.confluent.connect.http.connector;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class HttpSourceConnector extends SourceConnector {
-
-    private static final Logger log = LoggerFactory.getLogger(HttpSourceConnector.class);
-
-    private Map<String, String> config;
+    private Map<String, String> configProps;
 
     @Override
-    public void start(Map<String, String> config) {
-        this.config = config;
-        log.info("HttpSourceConnector started with config: {}", config);
+    public String version() {
+        return "1.0.0";
     }
 
     @Override
-    public void stop() {
-        log.info("HttpSourceConnector stopped.");
-    }
-
-    @Override
-    public ConfigDef config() {
-        return HttpSourceConfig.config();
+    public void start(Map<String, String> props) {
+        this.configProps = props;
     }
 
     @Override
@@ -40,13 +28,19 @@ public class HttpSourceConnector extends SourceConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
-        return IntStream.range(0, maxTasks)
-                .mapToObj(i -> config)
-                .collect(Collectors.toList());
+        List<Map<String, String>> configs = new ArrayList<>();
+        for (int i = 0; i < maxTasks; i++) {
+            configs.add(configProps);
+        }
+        return configs;
     }
 
     @Override
-    public String version() {
-        return "1.0.0"; // Connector version
+    public void stop() {
+    }
+
+    @Override
+    public ConfigDef config() {
+        return HttpSourceConfig.config();
     }
 }

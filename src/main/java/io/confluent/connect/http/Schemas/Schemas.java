@@ -1,0 +1,67 @@
+package io.confluent.connect.http.Schemas;
+
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+
+public class Schemas {
+
+    public static final Schema DIRECTORY_DATA_SCHEMA = SchemaBuilder.struct()
+            .name("directory_data")
+            .field("rel", Schema.STRING_SCHEMA)
+            .field("href", Schema.STRING_SCHEMA)
+            .field("rep", SchemaBuilder.struct()
+                    .name("rep")
+                    .field("parent", Schema.STRING_SCHEMA)
+                    .field("allowedMimeTypeRegex", Schema.STRING_SCHEMA)
+                    .field("parentName", Schema.STRING_SCHEMA)
+                    .field("deleted", Schema.BOOLEAN_SCHEMA)
+                    .field("visible", Schema.BOOLEAN_SCHEMA)
+                    .field("created", Schema.STRING_SCHEMA)
+                    .field("name", Schema.STRING_SCHEMA)
+                    .field("description", Schema.STRING_SCHEMA)
+                    .field("name_en", Schema.STRING_SCHEMA)
+                    .build())
+            .build();
+
+    public static final Schema MODEL_DATA_SCHEMA = SchemaBuilder.struct()
+            .name("model_data")
+            .field("rel", Schema.STRING_SCHEMA)
+            .field("href", Schema.STRING_SCHEMA)
+            .field("rep", SchemaBuilder.struct()
+                    .name("rep")
+                    .field("parent", Schema.STRING_SCHEMA)
+                    .field("formats", SchemaBuilder.map(Schema.STRING_SCHEMA, Schema.STRING_SCHEMA).optional().build())
+                    .field("granted_revision_user", Schema.STRING_SCHEMA)
+                    .field("isLicensedStencilSet", Schema.BOOLEAN_SCHEMA)
+                    .field("granted_revision_user_name", Schema.STRING_SCHEMA)
+                    .field("description", Schema.STRING_SCHEMA)
+                    .field("type", Schema.STRING_SCHEMA)
+                    .field("sri_revision", Schema.STRING_SCHEMA)
+                    .field("sri_path", Schema.STRING_SCHEMA)
+                    .field("isDeployed", Schema.BOOLEAN_SCHEMA)
+                    .field("granted_revision", Schema.STRING_SCHEMA)
+                    .field("rev", Schema.INT32_SCHEMA)
+                    .field("created", Schema.STRING_SCHEMA)
+                    .field("author", Schema.STRING_SCHEMA)
+                    .field("granted_revision_date", Schema.STRING_SCHEMA)
+                    .field("sri", Schema.STRING_SCHEMA)
+                    .field("authorCompany", Schema.STRING_SCHEMA)
+                    .field("revision", Schema.STRING_SCHEMA)
+                    .field("parentName", Schema.STRING_SCHEMA)
+                    .field("deleted", Schema.BOOLEAN_SCHEMA)
+                    .field("authorName", Schema.STRING_SCHEMA)
+                    .field("name", Schema.STRING_SCHEMA)
+                    .field("namespace", Schema.STRING_SCHEMA)
+                    .field("comment", Schema.STRING_SCHEMA)
+                    .field("updated", Schema.STRING_SCHEMA)
+                    .field("status", SchemaBuilder.struct()
+                            .name("status")
+                            .field("deleted", Schema.BOOLEAN_SCHEMA)
+                            .field("approve", Schema.BOOLEAN_SCHEMA)
+                            .field("publish", Schema.BOOLEAN_SCHEMA)
+                            .field("id", Schema.STRING_SCHEMA)
+                            .build())
+                    .build())
+            .build();
+}
+

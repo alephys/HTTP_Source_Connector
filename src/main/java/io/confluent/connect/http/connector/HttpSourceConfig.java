@@ -1,79 +1,70 @@
 package io.confluent.connect.http.connector;
 
-import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigDef.Type;
-import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.common.protocol.types.Field;
 
 import java.util.Map;
 
 public class HttpSourceConfig extends AbstractConfig {
-
-    public static final String KAFKA_STATUS_FOLDER_TOPIC = "kafka.status.folder.topic";
-    public static final String KAFKA_STATUS_MODEL_TOPIC = "kafka.status.model.topic";
-    public static final String KAFKA_STATUS_HEARBEAT_TOPIC = "kafka.status.heartbeat.topic";
-    public static final String SAP_SIGNAVIO_LOGIN_API = "sap.signavio.login.api";
-    public static final String SAP_SIGNAVIO_LOGIN_TENANTID = "sap.signavio.login.tenantId";
-    public static final String SAP_SIGNAVIO_LOGIN_USERNAME = "sap.signavio.login.username";
-    public static final String SAP_SIGNAVIO_LOGIN_PASSWORD = "sap.signavio.login.password";
-    public static final String SAP_SIGNAVIO_FOLDER_API = "sap.signavio.folder.api";
-    public static final String SAP_SIGNAVIO_MODEL_CONTENT_API = "sap.signavio.model.content.api";
-    public static final String POLL_INTERNVAL_MS = "poll.interval.ms";
+    public static final String TOPIC_CONFIG = "topic";
+    public static final String HTTP_ENDPOINT_CONFIG = "http.endpoint";
+    public static final String TENANT_ID = "tenant.id";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+    public static final String ROOT_DIRECTORY_ID = "root.directory.id";
+    public static final String POLL_INTERVAL_MS = "poll.interval.ms";
     public static final String HEARTBEAT_INTERVAL_MS = "heartbeat.interval.ms";
+    public static final String OFFSET_TOPIC = "offset.topic";
+    public static final String FOLDER_TOPIC = "folder.topic";
+    public static final String MODEL_TOPIC = "model.topic";
+    public static final String HEARTBEAT_TOPIC = "heartbeat.topic";
 
-
-
-    public HttpSourceConfig(Map<String, String> props) {
-        super(config(), props);
+    public HttpSourceConfig(Map<?, ?> originals) {
+        super(config(), originals);
     }
 
     public static ConfigDef config() {
         return new ConfigDef()
-                .define(KAFKA_STATUS_FOLDER_TOPIC, Type.STRING, Importance.HIGH, KAFKA_STATUS_FOLDER_TOPIC)
-                .define(KAFKA_STATUS_MODEL_TOPIC, Type.STRING, Importance.HIGH, KAFKA_STATUS_MODEL_TOPIC)
-                .define(KAFKA_STATUS_HEARBEAT_TOPIC, Type.STRING, Importance.HIGH, KAFKA_STATUS_HEARBEAT_TOPIC)
-                .define(SAP_SIGNAVIO_LOGIN_API, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_LOGIN_API)
-                .define(SAP_SIGNAVIO_LOGIN_TENANTID, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_LOGIN_TENANTID)
-                .define(SAP_SIGNAVIO_LOGIN_USERNAME, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_LOGIN_USERNAME)
-                .define(SAP_SIGNAVIO_LOGIN_PASSWORD, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_LOGIN_USERNAME)
-                .define(SAP_SIGNAVIO_FOLDER_API, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_FOLDER_API)
-                .define(SAP_SIGNAVIO_MODEL_CONTENT_API, Type.STRING, Importance.HIGH, SAP_SIGNAVIO_MODEL_CONTENT_API)
-                .define(POLL_INTERNVAL_MS, Type.LONG, Importance.HIGH, POLL_INTERNVAL_MS)
-                .define(HEARTBEAT_INTERVAL_MS, Type.LONG, Importance.HIGH, HEARTBEAT_INTERVAL_MS);
+                .define(TOPIC_CONFIG, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic to send data")
+                .define(HTTP_ENDPOINT_CONFIG, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "HTTP endpoint to fetch JSON messages")
+                .define(TENANT_ID, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Tenant ID")
+                .define(USERNAME, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Username")
+                .define(PASSWORD, ConfigDef.Type.PASSWORD, ConfigDef.Importance.HIGH, "Password")
+                .define(ROOT_DIRECTORY_ID, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Root directory ID")
+                .define(POLL_INTERVAL_MS, ConfigDef.Type.INT, 5, ConfigDef.Importance.MEDIUM, "Poll interval in ms")
+                .define(HEARTBEAT_INTERVAL_MS, ConfigDef.Type.INT, 60000, ConfigDef.Importance.MEDIUM, "Heartbeat interval in ms")
+                .define(OFFSET_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for storing offsets")
+                .define(FOLDER_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for folder information")
+                .define(MODEL_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for model data")
+                .define(HEARTBEAT_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for heartbeat messages");
     }
 
-    public String getKafkaStatusFolderTopic() {
-        return getString(KAFKA_STATUS_FOLDER_TOPIC);
-    }
-    public String getKafkaStatusModelTopic() {
-        return getString(KAFKA_STATUS_MODEL_TOPIC);
-    }
-    public String getKafkaStatusHeartbeatTopic() {
-        return getString(KAFKA_STATUS_HEARBEAT_TOPIC);
-    }
-    public String getSapSignavioLoginApi() {
-        return getString(SAP_SIGNAVIO_LOGIN_API);
-    }
-    public String getSapSignavioLoginTenantId() {
-        return getString(SAP_SIGNAVIO_LOGIN_TENANTID);
-    }
-    public String getSapSignavioLoginUsername() {
-        return getString(SAP_SIGNAVIO_LOGIN_USERNAME);
-    }
-    public String getSapSignavioLoginPassword() {
-        return getString(SAP_SIGNAVIO_LOGIN_PASSWORD);
-    }
-    public String getSapSignavioFolderApi() {
-        return getString(SAP_SIGNAVIO_FOLDER_API);
-    }
-    public String getSapSignavioModelContentApi() {
-        return getString(SAP_SIGNAVIO_MODEL_CONTENT_API);
-    }
-    public String getPollIntervalMs() {
-        return getString(POLL_INTERNVAL_MS);
-    }
-    public String getHeartbeatIntervalMs() {
-        return getString(HEARTBEAT_INTERVAL_MS);
+    public String getTopic() {
+        return this.getString(TOPIC_CONFIG);
     }
 
+    public String getHttpEndpoint() {
+        return this.getString(HTTP_ENDPOINT_CONFIG);
+    }
+
+    public int getPollIntervalMs() {
+        return this.getInt(POLL_INTERVAL_MS);
+    }
+
+    public int getHeartBeatIntervalMs() {
+        return this.getInt(HEARTBEAT_INTERVAL_MS);
+    }
+
+    public String getUserName() {
+        return this.getString(USERNAME);
+    }
+
+    public String getPassword() {
+        return this.getString(PASSWORD);
+    }
+
+    public String getTenantId() {
+        return this.getString(TENANT_ID);
+    }
 }
