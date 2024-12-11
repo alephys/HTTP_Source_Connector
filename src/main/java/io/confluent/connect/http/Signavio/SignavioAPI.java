@@ -15,7 +15,6 @@ public class SignavioAPI {
     private String authToken;
     private String jsessionId;
     private OkHttpClient client;
-    private String nextUri;
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
@@ -53,7 +52,11 @@ public class SignavioAPI {
             System.out.println("Authenticated, JSESSIONID: " + jsessionId);
         }
     }
-
+    // retrieve root directory id
+    public String retrieveRootDiagramsInFolder() throws IOException {
+        String url = this.baseUrl + "/p/directory";
+        return apiGet(url);
+    }
     // Retrieve diagrams in a folder
     public String retrieveDiagramsInFolder(String topLevelDirId) throws IOException {
         String url = this.baseUrl + "/p/directory/" + topLevelDirId;
@@ -63,16 +66,7 @@ public class SignavioAPI {
     // Get a dictionary entry
     public String getDic(String entryId) throws IOException {
         String entryUrl = this.baseUrl + "/p" + entryId + "/info";
-
-        // Check if it's cached
-        if (dictionaryCache.containsKey(entryUrl)) {
-            System.out.println("Item " + entryId + " cached. Retrieving from cache...");
-            return dictionaryCache.get(entryUrl);
-        }
-
-        System.out.println("Item " + entryId + " not in dictionary cache. Retrieving...");
         String dictionaryJson = apiGet(entryUrl);
-        dictionaryCache.put(entryUrl, dictionaryJson);
         return dictionaryJson;
     }
 
@@ -101,23 +95,4 @@ public class SignavioAPI {
         return apiGet(url);
     }
 
-    // Retrieve diagram info
-    public String retrieveDiagramInfo(String modelId) throws IOException {
-        String url = this.baseUrl + "/p/model/" + modelId + "/info";
-        return apiGet(url);
-    }
-
-    // Retrieve model info
-    public String getModelInfo(String modelId) throws IOException {
-        System.out.println("Getting workflow status for model: " + modelId);
-        String url = this.baseUrl + "/p/model/" + modelId + "/info";
-        return apiGet(url);
-    }
-
-    // Retrieve model revisions
-    public String retrieveModelRevisions(String modelId) throws IOException {
-        System.out.println("Getting revisions for model: " + modelId);
-        String url = this.baseUrl + "/p/model/" + modelId + "/revisions";
-        return apiGet(url);
-    }
 }

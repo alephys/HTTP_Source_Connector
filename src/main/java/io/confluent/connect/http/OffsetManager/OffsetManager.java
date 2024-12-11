@@ -27,7 +27,7 @@ public class OffsetManager {
     }
 
     // Serialize the offset to a Map
-    public Map<String, Object> toMap() {
+    public Map<String, Object> toMap(String uri) {
         Map<String, Object> map = new HashMap<>();
         map.put(TIMESTAMP_KEY, timestamp.toString());
         map.put(URI_KEY, uri);

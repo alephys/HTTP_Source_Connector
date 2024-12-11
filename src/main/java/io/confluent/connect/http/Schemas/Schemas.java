@@ -39,7 +39,6 @@ public class Schemas {
                     .field("name_space", Schema.STRING_SCHEMA)
                     .field("url", Schema.STRING_SCHEMA)
                     .build())
-            .field("published_date", Schema.INT32_SCHEMA)
             .field("process_owner", Schema.STRING_SCHEMA)
             .field("process_owner_email", Schema.STRING_SCHEMA)
             .field("assurance_lead", Schema.STRING_SCHEMA)
@@ -53,7 +52,6 @@ public class Schemas {
             .field("critical_operations_categories", Schema.STRING_SCHEMA)
             .field("documentation", Schema.STRING_SCHEMA)
             .field("division", Schema.STRING_SCHEMA)
-            .field("category_id", Schema.STRING_SCHEMA)
             .build();
 }
 

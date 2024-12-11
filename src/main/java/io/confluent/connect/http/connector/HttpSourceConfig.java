@@ -12,12 +12,10 @@ public class HttpSourceConfig extends AbstractConfig {
     public static final String TENANT_ID = "tenant.id";
     public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
-    public static final String ROOT_DIRECTORY_ID = "root.directory.id";
     public static final String POLL_INTERVAL_MS = "poll.interval.ms";
     public static final String HEARTBEAT_INTERVAL_MS = "heartbeat.interval.ms";
     public static final String OFFSET_TOPIC = "offset.topic";
     public static final String MODEL_TOPIC = "model.topic";
-    public static final String HEARTBEAT_TOPIC = "heartbeat.topic";
 
     public HttpSourceConfig(Map<?, ?> originals) {
         super(config(), originals);
@@ -30,12 +28,11 @@ public class HttpSourceConfig extends AbstractConfig {
                 .define(TENANT_ID, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Tenant ID")
                 .define(USERNAME, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Username")
                 .define(PASSWORD, ConfigDef.Type.PASSWORD, ConfigDef.Importance.HIGH, "Password")
-                .define(ROOT_DIRECTORY_ID, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Root directory ID")
                 .define(POLL_INTERVAL_MS, ConfigDef.Type.INT, 5, ConfigDef.Importance.MEDIUM, "Poll interval in ms")
                 .define(HEARTBEAT_INTERVAL_MS, ConfigDef.Type.INT, 60000, ConfigDef.Importance.MEDIUM, "Heartbeat interval in ms")
                 .define(OFFSET_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for storing offsets")
-                .define(MODEL_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for model data")
-                .define(HEARTBEAT_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for heartbeat messages");
+                .define(MODEL_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for model data");
+
     }
 
     public String getTopic() {
@@ -65,4 +62,6 @@ public class HttpSourceConfig extends AbstractConfig {
     public String getTenantId() {
         return this.getString(TENANT_ID);
     }
+
+    public String getModelTopic() {return this.getString(MODEL_TOPIC);}
 }
