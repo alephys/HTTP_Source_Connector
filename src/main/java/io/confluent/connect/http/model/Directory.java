@@ -2,7 +2,7 @@ package io.confluent.connect.http.model;
 
 public class Directory {
     private String rel;
-    private String href;
+    private String directory_id;
     private String parent;
     private String allowedMimeTypeRegex;
     private String parentName;
@@ -13,9 +13,9 @@ public class Directory {
     private String description;
     private String nameEn;
 
-    public Directory(String rel, String href, String parent, String allowedMimeTypeRegex, String parentName, Boolean deleted, Boolean visible, String created, String name, String description, String nameEn) {
+    public Directory(String rel, String directory_id, String parent, String allowedMimeTypeRegex, String parentName, Boolean deleted, Boolean visible, String created, String name, String description, String nameEn) {
         this.rel = rel;
-        this.href = href;
+        this.directory_id = directory_id;
         this.parent = parent;
         this.allowedMimeTypeRegex = allowedMimeTypeRegex;
         this.parentName = parentName;
@@ -35,12 +35,12 @@ public class Directory {
         this.rel = rel;
     }
 
-    public String getHref() {
-        return href;
+    public String getDirectory_id() {
+        return directory_id;
     }
 
-    public void setHref(String href) {
-        this.href = href;
+    public void setDirectory_id(String directory_id) {
+        this.directory_id = directory_id;
     }
 
     public String getParent() {
@@ -119,7 +119,7 @@ public class Directory {
     public String toString() {
         return "{" +
                 "\"rel\": \"" + rel + "\"," +
-                "\"href\": \"" + href + "\"," +
+                "\"href\": \"" + directory_id + "\"," +
                 "\"parent\": \"" + parent + "\"," +
                 "\"allowedMimeTypeRegex\": \"" + allowedMimeTypeRegex + "\"," +
                 "\"parentName\": \"" + parentName + "\"," +

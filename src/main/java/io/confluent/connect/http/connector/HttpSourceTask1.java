@@ -62,9 +62,9 @@ public class HttpSourceTask1 extends SourceTask {
         }
     }
 
-    private Map<String, String> sourcePartition(String value) {
+    private Map<String, String> sourcePartition(String key,String value) {
         Map<String, String> partition = new HashMap<>();
-        partition.put("id", value);
+        partition.put(key, value);
         return partition;
     }
 
@@ -73,7 +73,7 @@ public class HttpSourceTask1 extends SourceTask {
         List<SourceRecord> records = new ArrayList<>();
         try {
 
-            Map<String, Object> lastOffsetMap = context.offsetStorageReader().offset(sourcePartition());
+            Map<String, Object> lastOffsetMap = context.offsetStorageReader().offset(sourcePartition("http-endpoint",httpEndpoint));
             if (lastOffsetMap == null) {
                 log.info("No previous offset found. Starting from the beginning.");
             }
@@ -133,7 +133,7 @@ public class HttpSourceTask1 extends SourceTask {
                         dirJson.getJSONObject("rep").getString("name"),
                         dirJson.getJSONObject("rep").getString("description"),
                         dirJson.getJSONObject("rep").getString("name_en"));
-                records.add(createSourceRecordForDirectory(res,dirJson.getString("href").replace("/directory/",""),httpEndpoint+"/p/directory");
+                records.add(createSourceRecordForDirectory(res,"directory_id",dirJson.getString("href").replace("/directory/",""));
             }
             if("dir".equals(dirJson.getString("rel"))){
                 String dirId = dirJson.getString("rep").replace("/directory/","");
@@ -181,7 +181,7 @@ public class HttpSourceTask1 extends SourceTask {
                         modelRev.get("documentation"),
                         modelRev.get("division"));
 
-                records.add(createSourceRecordForModel(m,modJson.getString("href").replace("/model/",""),httpEndpoint+"/p/model");
+                records.add(createSourceRecordForModel(m,"model_id",modJson.getString("href").replace("/model/",""));
 
             }
         }
@@ -251,12 +251,12 @@ public class HttpSourceTask1 extends SourceTask {
         return result;
     }
 
-    private SourceRecord createSourceRecordForDirectory(Directory dir,String value,String uri) {
-        return new SourceRecord(sourcePartition(value), offsetManager.toMap(uri), dir_topic, Schemas.DIRECTORY_DATA_SCHEMA, dir.toString());
+    private SourceRecord createSourceRecordForDirectory(Directory dir,String key,String value) {
+        return new SourceRecord(sourcePartition(key,value), offsetManager.toMap(), dir_topic, Schemas.DIRECTORY_DATA_SCHEMA, dir.toString());
     }
 
-    private SourceRecord createSourceRecordForModel(Model model,String value,String uri) {
-        return new SourceRecord(sourcePartition(value), offsetManager.toMap(uri), model_topic, Schemas.MODEL_DATA_SCHEMA, model.toString());
+    private SourceRecord createSourceRecordForModel(Model model,String key,String value) {
+        return new SourceRecord(sourcePartition(key,value), offsetManager.toMap(), model_topic, Schemas.MODEL_DATA_SCHEMA, model.toString());
     }
 
     @Override
