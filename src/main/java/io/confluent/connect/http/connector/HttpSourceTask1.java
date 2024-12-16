@@ -3,6 +3,8 @@ package io.confluent.connect.http.connector;
 import io.confluent.connect.http.OffsetManager.HttpSourceOffsetManager;
 import io.confluent.connect.http.model.Directory;
 import io.confluent.connect.http.model.Model;
+import org.apache.kafka.common.protocol.types.Field;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import io.confluent.connect.http.resources.TimeCheck;
@@ -15,10 +17,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HttpSourceTask1 extends SourceTask {
     private static final ConnectorLogger log = ConnectorLogger.getLogger(HttpSourceTask1.class);
@@ -36,6 +35,8 @@ public class HttpSourceTask1 extends SourceTask {
     private SignavioAPI signavioApi;
     private HttpSourceOffsetManager offsetManager;
     private Instant lastTimestamp;
+    private HttpSourceConfig config;
+
 
 
     @Override
@@ -46,7 +47,7 @@ public class HttpSourceTask1 extends SourceTask {
     @Override
     public void start(Map<String, String> props) {
         log.info("Starting HttpSourceTask with provided configuration...");
-        HttpSourceConfig config = new HttpSourceConfig(props);
+        config = new HttpSourceConfig(props);
         this.dir_topic = config.getTopic();
         this.model_topic = config.getModelTopic();
         this.httpEndpoint = config.getHttpEndpoint();
@@ -87,6 +88,7 @@ public class HttpSourceTask1 extends SourceTask {
             log.info("Polling completed with "+records.size()+" records." );
         } catch (Exception e) {
             log.error("Error during polling. Details: "+ e.getMessage());
+            handleDLQ(e,"Error during polling.");
         }
         return records;
     }
@@ -275,6 +277,30 @@ public class HttpSourceTask1 extends SourceTask {
         return partition;
     }
 
+    private void handleDLQ(Exception exception, String failedData) {
+        Boolean dlq = Boolean.parseBoolean(config.getDlqReportErrors());
+        if (dlq) {
+            String dlqTopic = config.getDlqTopic();
+            try {
+                Map<String, String> partition = Collections.singletonMap("source", "http-source");
+                Map<String, String> offset = Collections.singletonMap("failed-timestamp", String.valueOf(System.currentTimeMillis()));
+
+                SourceRecord dlqRecord = new SourceRecord(
+                        partition,
+                        offset,
+                        dlqTopic,
+                        Schema.STRING_SCHEMA,
+                        failedData,
+                        Schema.STRING_SCHEMA,
+                        exception.getMessage()
+                );
+                //context.sendRecord(dlqRecord);
+                log.warn("Record sent to DLQ: "+ dlqRecord);
+            } catch (Exception dlqException) {
+                log.error("Failed to send record to DLQ: "+ dlqException);
+            }
+        }
+    }
 
     @Override
     public void stop() {

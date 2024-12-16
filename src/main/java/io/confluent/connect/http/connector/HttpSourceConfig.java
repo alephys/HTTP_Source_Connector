@@ -17,6 +17,11 @@ public class HttpSourceConfig extends AbstractConfig {
     public static final String MODEL_TOPIC = "model.topic";
     public static final String PUBLISHED_ROOT_ID = "published.root.id";
     public static final String RETIRED_ROOT_ID = "retired.root.id";
+    public static final String DLQ_TOPIC_CONFIG = "dead.letter.queue.topic";
+    public static final String DLQ_TOPIC_DEFAULT = "dlq";
+    public static final String DLQ_REPORT_ERRORS_CONFIG = "dead.letter.queue.report.errors";
+    public static final boolean DLQ_REPORT_ERRORS_DEFAULT = true;
+
 
     public HttpSourceConfig(Map<?, ?> originals) {
         super(config(), originals);
@@ -34,7 +39,9 @@ public class HttpSourceConfig extends AbstractConfig {
                 .define(OFFSET_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for storing offsets")
                 .define(MODEL_TOPIC, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, "Kafka topic for model data")
                 .define(PUBLISHED_ROOT_ID,ConfigDef.Type.STRING,ConfigDef.Importance.HIGH,"Root DirectoryId for published model")
-                .define(RETIRED_ROOT_ID,ConfigDef.Type.STRING,ConfigDef.Importance.HIGH,"Root DirectoryId for retired model");
+                .define(RETIRED_ROOT_ID,ConfigDef.Type.STRING,ConfigDef.Importance.HIGH,"Root DirectoryId for retired model")
+                .define(DLQ_TOPIC_CONFIG, ConfigDef.Type.STRING, DLQ_TOPIC_DEFAULT, ConfigDef.Importance.HIGH, "Topic to write failed records.")
+                .define(DLQ_REPORT_ERRORS_CONFIG, ConfigDef.Type.BOOLEAN, DLQ_REPORT_ERRORS_DEFAULT, ConfigDef.Importance.MEDIUM, "Enable reporting of errors to the DLQ.");
     }
 
     public String getTopic() {
@@ -70,4 +77,9 @@ public class HttpSourceConfig extends AbstractConfig {
     public String getPublishedRootId() {return this.getString(PUBLISHED_ROOT_ID);}
 
     public String getRetiredRootId() {return this.getString(RETIRED_ROOT_ID);}
+
+    public String getDlqTopic() {return this.getString(DLQ_TOPIC_CONFIG);}
+
+    public String getDlqReportErrors() {return this.getString(DLQ_REPORT_ERRORS_CONFIG);}
+
 }
