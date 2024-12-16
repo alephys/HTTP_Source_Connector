@@ -3,7 +3,6 @@ package io.confluent.connect.http.connector;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-import io.confluent.connect.http.OffsetManager.OffsetManager;
 import io.confluent.connect.http.resources.TimeCheck;
 import io.confluent.connect.http.Logger.ConnectorLogger;
 

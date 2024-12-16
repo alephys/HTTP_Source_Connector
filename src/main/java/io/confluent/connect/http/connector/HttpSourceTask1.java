@@ -1,14 +1,14 @@
 package io.confluent.connect.http.connector;
 
-import io.confluent.connect.http.Schemas.Schemas;
+import io.confluent.connect.http.OffsetManager.HttpSourceOffsetManager;
 import io.confluent.connect.http.model.Directory;
 import io.confluent.connect.http.model.Model;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-import io.confluent.connect.http.OffsetManager.OffsetManager;
 import io.confluent.connect.http.resources.TimeCheck;
 import io.confluent.connect.http.Logger.ConnectorLogger;
 import io.confluent.connect.http.Signavio.SignavioAPI;
+import static io.confluent.connect.http.Schemas.Schemas.*;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -31,9 +31,11 @@ public class HttpSourceTask1 extends SourceTask {
     private String PASSWORD;
     private String nextUri;
     private String TENANT_ID;
+    private String PUBLISHED_ROOT_ID;
+    private String RETIRED_ROOT_ID;
     private SignavioAPI signavioApi;
-    private OffsetManager offsetManager;
-
+    private HttpSourceOffsetManager offsetManager;
+    private Instant lastTimestamp;
 
 
     @Override
@@ -43,6 +45,7 @@ public class HttpSourceTask1 extends SourceTask {
 
     @Override
     public void start(Map<String, String> props) {
+        log.info("Starting HttpSourceTask with provided configuration...");
         HttpSourceConfig config = new HttpSourceConfig(props);
         this.dir_topic = config.getTopic();
         this.model_topic = config.getModelTopic();
@@ -53,75 +56,70 @@ public class HttpSourceTask1 extends SourceTask {
         this.PASSWORD = config.getPassword();
         this.TENANT_ID = config.getTenantId();
         this.signavioApi = new SignavioAPI(httpEndpoint, TENANT_ID);
-        this.offsetManager = new OffsetManager();
-        Map<String, Object> offsetMap = context.offsetStorageReader().offset(sourcePartition());
-        offsetManager = OffsetManager.fromMap(offsetMap);
-        if (offsetManager != null) {
-            nextUri = offsetManager.getUri();
-        } else {
-        }
-    }
-
-    private Map<String, String> sourcePartition(String key,String value) {
-        Map<String, String> partition = new HashMap<>();
-        partition.put(key, value);
-        return partition;
+        this.offsetManager = new HttpSourceOffsetManager(context,httpEndpoint);
+        this.PUBLISHED_ROOT_ID = config.getPublishedRootId();
+        this.RETIRED_ROOT_ID = config.getRetiredRootId();
+        Map<String, Object> highWatermark = offsetManager.getHighWatermark();
+        lastTimestamp = (Instant) highWatermark.get("timestamp");
+        nextUri = (String) highWatermark.get("nextUri");
+        log.info("HttpSourceTask started successfully with endpoint: {}");
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         List<SourceRecord> records = new ArrayList<>();
         try {
-
-            Map<String, Object> lastOffsetMap = context.offsetStorageReader().offset(sourcePartition("http-endpoint",httpEndpoint));
-            if (lastOffsetMap == null) {
-                log.info("No previous offset found. Starting from the beginning.");
-            }
-
-            OffsetManager lastOffset = OffsetManager.fromMap(lastOffsetMap);
-            if (lastOffset == null) {
-                log.warn("Failed to parse offset. Starting from the beginning.");
-            }
-
-            Instant lastTimestamp = lastOffset.getTimestamp();
             if (lastTimestamp != null) {
                 log.info("Last offset timestamp: " + lastTimestamp);
                 TimeCheck.checkOffsetWithPollInterval(lastTimestamp, POLL_INTERVAL_MS * 60 * 1000, HEARTBEAT_INTERVAL_MS);
             } else {
                 log.warn("No timestamp found in the last offset. Unable to proceed.");
             }
+            log.debug("Authenticating with Signavio API...");
             signavioApi.authenticate(USERNAME, PASSWORD);
 
-            String topLevelDirectoryJson = signavioApi.retrieveRootDiagramsInFolder();
-            JSONArray responseJson = new JSONArray(topLevelDirectoryJson);
-            ArrayList<String> topLevelDirectoryId = new ArrayList<>();
-            for (int i=0; i < responseJson.length(); i++) {
-                JSONObject res = responseJson.getJSONObject(i);
-                if("dir".equals(res.getString("rel"))) {
-                    String temp = res.getString("href").replace("/directory/","");
-                    topLevelDirectoryId.add(temp);
-                }
-            }
+            log.info("Fetching published diagrams...");
+            records = fetching(PUBLISHED_ROOT_ID,records);
 
-            for (int i=0; i< topLevelDirectoryId.size(); i++) {
-                String directoryResponse = signavioApi.retrieveDiagramsInFolder(topLevelDirectoryId.get(i));
-                JSONArray folderResponseJson = new JSONArray(directoryResponse);
-                retrivediagramMetaData(folderResponseJson,records);
-            }
+            log.info("Fetching retired diagrams...");
+            records = fetching(RETIRED_ROOT_ID,records);
 
-
+            log.info("Polling completed with "+records.size()+" records." );
         } catch (Exception e) {
-            log.error("");
+            log.error("Error during polling. Details: "+ e.getMessage());
         }
         return records;
     }
 
-    private void retrivediagramMetaData(JSONArray dirResponse, List<SourceRecord> records) throws IOException {
+    private List<SourceRecord> fetching(String id,List<SourceRecord> records) throws IOException {
+        log.debug("Fetching diagrams for root ID: "+id);
+        String topLevelDirectoryJson = signavioApi.retrieveRootDiagramsInFolder(id);
+        JSONArray responseJson = new JSONArray(topLevelDirectoryJson);
+        ArrayList<String> topLevelDirectoryId = new ArrayList<>();
+        for (int i=0; i < responseJson.length(); i++) {
+            JSONObject res = responseJson.getJSONObject(i);
+            if("dir".equals(res.getString("rel"))) {
+                String temp = res.getString("href").replace("/directory/","");
+                topLevelDirectoryId.add(temp);
+            }
+        }
+        log.info("Found "+topLevelDirectoryId.size()+"directories for root ID: "+ id);
 
+        for (int i=0; i< topLevelDirectoryId.size(); i++) {
+            String directoryResponse = signavioApi.retrieveDiagramsInFolder(topLevelDirectoryId.get(i));
+            JSONArray folderResponseJson = new JSONArray(directoryResponse);
+            records = (retrivediagramMetaData(folderResponseJson,records));
+        }
+        return records;
+    }
+
+    private List<SourceRecord> retrivediagramMetaData(JSONArray dirResponse, List<SourceRecord> records) throws IOException {
         for(int i=0; i < dirResponse.length(); i++) {
             JSONObject dirJson = dirResponse.getJSONObject(i);
 
             if("info".equals(dirJson.getString("rel"))) {
+                String dirId = dirJson.getString("href").replace("/directory/","");
+                log.debug("Processing directory metadata with id: "+ dirId );
                 Directory res = new Directory(dirJson.getString("rel"),
                         dirJson.getString("href").replace("/directory/",""),
                         dirJson.getJSONObject("rep").getString("parent"),
@@ -133,58 +131,65 @@ public class HttpSourceTask1 extends SourceTask {
                         dirJson.getJSONObject("rep").getString("name"),
                         dirJson.getJSONObject("rep").getString("description"),
                         dirJson.getJSONObject("rep").getString("name_en"));
-                records.add(createSourceRecordForDirectory(res,"directory_id",dirJson.getString("href").replace("/directory/",""));
+                nextUri = httpEndpoint+"/p/directory/"+dirId;
+                records.add(createSourceRecordForDirectory(res,"directory_id",dirId,nextUri));
             }
             if("dir".equals(dirJson.getString("rel"))){
-                String dirId = dirJson.getString("rep").replace("/directory/","");
+                log.debug("Found subdirectory. Recursively processing...");
                 retrivediagramMetaData(dirResponse, records);
             }else if("mod".equals(dirJson.getString("rel"))){
+                log.debug("Processing model metadata...");
                 JSONObject modJson = dirJson.getJSONObject("rep");
                 boolean published = modJson.getJSONObject("status").getBoolean("publish");
-                String modelId = modJson.getString("href").replace("/model/","");
-                String modelRevision = "";
-                if(modJson.getString("granted_revision").isEmpty()){
-                    modelRevision = modJson.getString("revision").replace("/revision/","");
-                }else{
-                    modelRevision = modJson.getString("granted_revision").replace("/revision/","");
+                boolean retired = modJson.getJSONObject("status").getBoolean("retired");
+                if(published || retired) {
+                    String modelId = modJson.getString("href").replace("/model/", "");
+                    String modelRevision = "";
+                    if (modJson.getString("granted_revision").isEmpty()) {
+                        modelRevision = modJson.getString("revision").replace("/revision/", "");
+                    } else {
+                        modelRevision = modJson.getString("granted_revision").replace("/revision/", "");
+                    }
+                    String tempPubDate = modJson.getString("granted_revision_date").split("\\+")[0];
+                    String pubDate = tempPubDate.split(" ")[0];
+                    String tempLastEdit = modJson.getString("updated").split("\\+")[0];
+                    String lastEdit = tempLastEdit.split(" ")[0];
+                    Map<String, String> modelRev = retriveModelRevision(modelRevision);
+                    log.debug("Processing model metadata with id: "+ modelId );
+                    Model m = new Model(modelId,
+                            pubDate,
+                            modJson.getString("granted_revision"),
+                            modJson.getString("granted_revision_number"),
+                            modJson.getString("name"),
+                            modJson.getString("comment"),
+                            modJson.getString("modeller"),
+                            "Published",
+                            lastEdit,
+                            modJson.getString("parentName"),
+                            modJson.getJSONObject("rep").getString("parent"),
+                            new Model.StencilSet(
+                                    modJson.getJSONObject("stencil_set").getString("name_space"),
+                                    modJson.getJSONObject("stencil_set").getString("url")),
+                            modelRev.get("process_owner"),
+                            modelRev.get("process_owner_email"),
+                            modelRev.get("assurance_lead"),
+                            modelRev.get("assurance_lead_email"),
+                            modelRev.get("e2e_process_owner"),
+                            modelRev.get("e2e_process_owner_email"),
+                            modelRev.get("process_type"),
+                            modelRev.get("pcf_id"),
+                            modelRev.get("critical_operations"),
+                            modelRev.get("last_attestation_date"),
+                            modelRev.get("critical_operation_categories"),
+                            modelRev.get("documentation"),
+                            modelRev.get("division"),
+                            modelRev.get("division_code"));
+                    nextUri = httpEndpoint+"/p/directory/"+modelId+"/json";
+                    records.add(createSourceRecordForModel(m, "model_id", modelId,nextUri));
                 }
-                String tempPubDate = modJson.getString("granted_revision_date").split("\\+")[0];
-                String pubDate = tempPubDate.split(" ")[0];
-                String tempLastEdit = modJson.getString("updated").split("\\+")[0];
-                String lastEdit = tempLastEdit.split(" ")[0];
-                Map<String,String> modelRev = retriveModelRevision(modelRevision);
-                Model m = new Model(modJson.getString("href").replace("/model/",""),
-                        modJson.getString(pubDate),
-                        modJson.getString("granted_revision"),
-                        modJson.getString("granted_revision_number"),
-                        modJson.getString("name"),
-                        modJson.getString("comment"),
-                        modJson.getString("modeller"),
-                        "Published",
-                        lastEdit,
-                        modJson.getString("parentName"),
-                        dirJson.getJSONObject("rep").getString("name"),
-                        new Model.StencilSet(
-                                modJson.getJSONObject("stencil_set").getString("name_space"),
-                                modJson.getJSONObject("stencil_set").getString("url")),
-                        modelRev.get("process_owner"),
-                        modelRev.get("process_owner_email"),
-                        modelRev.get("assurance_lead"),
-                        modelRev.get("assurance_lead_email"),
-                        modelRev.get("e2e_process_owner"),
-                        modelRev.get("e2e_process_owner_email"),
-                        modelRev.get("process_type"),
-                        modelRev.get("pcf_id"),
-                        modelRev.get("critical_operations"),
-                        modelRev.get("last_attestation_date"),
-                        modelRev.get("critical_operation_categories"),
-                        modelRev.get("documentation"),
-                        modelRev.get("division"));
-
-                records.add(createSourceRecordForModel(m,"model_id",modJson.getString("href").replace("/model/",""));
-
             }
         }
+        return records;
     }
 
     private Map<String,String> retriveModelRevision(String modelRevision) throws IOException {
@@ -239,6 +244,11 @@ public class HttpSourceTask1 extends SourceTask {
         JSONObject divDicResJson = new JSONObject(divDic);
         modelRevisionMap.put("division", divDicResJson.getString("title"));
 
+        String divisionCodeId = modelRevisionJson.getJSONObject("properties").getString("Pending");
+        String  divCodeDic = signavioApi.getDic(divisionCodeId);
+        JSONObject divCodeDicResJson = new JSONObject(divCodeDic);
+        modelRevisionMap.put("division_code", divCodeDicResJson.getString("title"));
+
         return modelRevisionMap;
 
     }
@@ -251,13 +261,20 @@ public class HttpSourceTask1 extends SourceTask {
         return result;
     }
 
-    private SourceRecord createSourceRecordForDirectory(Directory dir,String key,String value) {
-        return new SourceRecord(sourcePartition(key,value), offsetManager.toMap(), dir_topic, Schemas.DIRECTORY_DATA_SCHEMA, dir.toString());
+    private SourceRecord createSourceRecordForDirectory(Directory dir,String key,String value,String nextUri) {
+        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), dir_topic,KEY_SCHEMA,dir.getDirectory_id(), DIRECTORY_DATA_SCHEMA, dir.toString());
     }
 
-    private SourceRecord createSourceRecordForModel(Model model,String key,String value) {
-        return new SourceRecord(sourcePartition(key,value), offsetManager.toMap(), model_topic, Schemas.MODEL_DATA_SCHEMA, model.toString());
+    private SourceRecord createSourceRecordForModel(Model model, String key, String value, String nextUri) {
+        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), model_topic,KEY_SCHEMA, model.getModel_id(), MODEL_DATA_SCHEMA, model.toString());
     }
+
+    private Map<String, String> sourcePartition(String key,String value) {
+        Map<String, String> partition = new HashMap<>();
+        partition.put(key, value);
+        return partition;
+    }
+
 
     @Override
     public void stop() {

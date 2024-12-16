@@ -20,8 +20,6 @@ public class TimeCheck {
 
         while (true) {
             Instant currentTime = Instant.now();
-
-
             if (currentTime.isAfter(pollEndTime)) {
                 log.info("Poll interval has elapsed. Proceeding with the task...");
                 break;

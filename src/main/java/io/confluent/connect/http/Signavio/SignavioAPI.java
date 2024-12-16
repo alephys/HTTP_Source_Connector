@@ -2,6 +2,8 @@ package io.confluent.connect.http.Signavio;
 
 import okhttp3.*;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import java.util.Map;
 
 public class SignavioAPI {
 
+    private static final Logger log = LoggerFactory.getLogger(SignavioAPI.class);
     private final String baseUrl;
     private final String workspaceId;
     private Map<String, String> dictionaryCache = new HashMap<>();
@@ -23,13 +26,10 @@ public class SignavioAPI {
         this.baseUrl = baseUrl;
         this.workspaceId = workspaceId;
         this.client = new OkHttpClient();
-        System.out.println("API object created with " + this.baseUrl);
     }
 
     // Authenticate method
     public void authenticate(String username, String password) throws IOException {
-        System.out.println("POST /p/login");
-
         String loginUrl = this.baseUrl + "/p/login";
         String json = new JSONObject()
                 .put("name", username)
@@ -44,22 +44,37 @@ public class SignavioAPI {
                 .post(body)
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
+        try{
+            Response response = client.newCall(request).execute();
             String responseBody = response.body().string();
             this.authToken = responseBody;  // authToken is in the response body
-            this.jsessionId = response.header("JSESSIONID");  // Assuming JSESSIONID is in header
-
-            System.out.println("Authenticated, JSESSIONID: " + jsessionId);
+            this.jsessionId = response.header("JSESSIONID"); // Assuming JSESSIONID is in header
+            switch (response.code()){
+                case 200:
+                    log.info("Successfully authenticated to Signavio");
+                    break;
+                case 401:
+                    log.error("Bad Signavio Credentials provided, Please edit the config");
+                    break;
+                case 403:
+                    log.error("HTTP Error "+response.code()+": Forbidden");
+                default:
+                    log.error("Unknown Error: Sleeping 5 seconds before retrying");
+                    Thread.sleep(5000);
+                    authenticate(username,password);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
         }
     }
     // retrieve root directory id
-    public String retrieveRootDiagramsInFolder() throws IOException {
-        String url = this.baseUrl + "/p/directory";
+    public String retrieveRootDiagramsInFolder(String topLevelDirId) throws IOException {
+        String url = this.baseUrl + "/p/directory" + topLevelDirId;
         return apiGet(url);
     }
     // Retrieve diagrams in a folder
-    public String retrieveDiagramsInFolder(String topLevelDirId) throws IOException {
-        String url = this.baseUrl + "/p/directory/" + topLevelDirId;
+    public String retrieveDiagramsInFolder(String subDirId) throws IOException {
+        String url = this.baseUrl + "/p/directory/" + subDirId;
         return apiGet(url);
     }
 
@@ -82,7 +97,7 @@ public class SignavioAPI {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
+                log.error("Unexpected code " + response);
             }
             return response.body().string();
         }
@@ -90,7 +105,6 @@ public class SignavioAPI {
 
     // Retrieve model revision
     public String retrieveModelRevision(String revisionId) throws IOException {
-        System.out.println("GET /p/revision/" + revisionId + "/json");
         String url = this.baseUrl + "/p/revision/" + revisionId + "/json";
         return apiGet(url);
     }

@@ -4,13 +4,13 @@ public class Model {
     public String model_id;
     public String published_date;
     public String published_revision;
-    public boolean published_revision_number;
+    public String published_revision_number;
     public String model_name;
     public String comment;
     public String modeller;
     public String published_status;
     public String last_edit;
-    public boolean parent;
+    public String parent;
     public String folder_name;
     public StencilSet stencil_set;
     public String process_owner;
@@ -20,12 +20,13 @@ public class Model {
     public String e2e_process_owner;
     public String e2e_process_owner_email;
     public String process_type;
-    public boolean pcf_id;
+    public String pcf_id;
     public String critical_operations;
     public String last_attestation_date;
     public String critical_operations_categories;
     public String documentation;
     public String division;
+    public String division_code;
 
     public static class StencilSet {
         public String name_space;
@@ -61,7 +62,7 @@ public class Model {
         }
     }
 
-    public Model(String model_id, String name, String published_date, String published_revision, boolean published_revision_number, String model_name, String comment, String modeller, String published_status, String last_edit, boolean parent, String folder_name, StencilSet stencil_set, String process_owner, String process_owner_email, String assurance_lead, String assurance_lead_email, String e2e_process_owner, String e2e_process_owner_email, String process_type, boolean pcf_id, String critical_operations, String last_attestation_date, String critical_operations_categories, String documentation, String division) {
+    public Model(String model_id, String published_date, String published_revision, String published_revision_number, String model_name, String comment, String modeller, String published_status, String last_edit, String parent, String folder_name, StencilSet stencil_set, String process_owner, String process_owner_email, String assurance_lead, String assurance_lead_email, String e2e_process_owner, String e2e_process_owner_email, String process_type, String pcf_id, String critical_operations, String last_attestation_date, String critical_operations_categories, String documentation, String division,String division_code) {
         this.model_id = model_id;
         this.published_date = published_date;
         this.published_revision = published_revision;
@@ -74,7 +75,6 @@ public class Model {
         this.parent = parent;
         this.folder_name = folder_name;
         this.stencil_set = stencil_set;
-        this.published_date = published_date;
         this.process_owner = process_owner;
         this.process_owner_email = process_owner_email;
         this.assurance_lead = assurance_lead;
@@ -88,6 +88,7 @@ public class Model {
         this.critical_operations_categories = critical_operations_categories;
         this.documentation = documentation;
         this.division = division;
+        this.division_code = division_code;
     }
 
     public String getModel_id() {
@@ -114,11 +115,11 @@ public class Model {
         this.published_revision = published_revision;
     }
 
-    public boolean isPublished_revision_number() {
+    public String getPublished_revision_number() {
         return published_revision_number;
     }
 
-    public void setPublished_revision_number(boolean published_revision_number) {
+    public void setPublished_revision_number(String published_revision_number) {
         this.published_revision_number = published_revision_number;
     }
 
@@ -162,11 +163,11 @@ public class Model {
         this.last_edit = last_edit;
     }
 
-    public boolean isParent() {
+    public String getParent() {
         return parent;
     }
 
-    public void setParent(boolean parent) {
+    public void setParent(String parent) {
         this.parent = parent;
     }
 
@@ -242,11 +243,11 @@ public class Model {
         this.process_type = process_type;
     }
 
-    public boolean isPcf_id() {
+    public String getPcf_id() {
         return pcf_id;
     }
 
-    public void setPcf_id(boolean pcf_id) {
+    public void setPcf_id(String pcf_id) {
         this.pcf_id = pcf_id;
     }
 
@@ -290,6 +291,14 @@ public class Model {
         this.division = division;
     }
 
+    public String getDivision_code() {
+        return division_code;
+    }
+
+    public void setDivision_code(String division_code) {
+        this.division_code = division_code;
+    }
+
     @Override
     public String toString() {
         return "{" +
@@ -318,6 +327,7 @@ public class Model {
                 "\"critical_operations_categories\": \"" + critical_operations_categories + "\"," +
                 "\"documentation\": \"" + documentation + "\"," +
                 "\"division\": \"" + division + "\"," +
+                "\"division_code\": \"" + division_code + "\"," +
                 "}";
     }
 }

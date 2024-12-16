@@ -5,6 +5,12 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 
 public class Schemas {
 
+    public static final Schema KEY_SCHEMA = SchemaBuilder.struct()
+            .name("issue_key")
+            .field("id", Schema.STRING_SCHEMA)
+            .build();
+
+
     public static final Schema DIRECTORY_DATA_SCHEMA = SchemaBuilder.struct()
             .name("directory_data")
             .field("rel", Schema.STRING_SCHEMA)
@@ -52,6 +58,7 @@ public class Schemas {
             .field("critical_operations_categories", Schema.STRING_SCHEMA)
             .field("documentation", Schema.STRING_SCHEMA)
             .field("division", Schema.STRING_SCHEMA)
+            .field("division_code", Schema.STRING_SCHEMA)
             .build();
 }
 
