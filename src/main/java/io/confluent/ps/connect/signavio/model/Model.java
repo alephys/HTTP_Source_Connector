@@ -1,4 +1,4 @@
-package io.confluent.connect.http.model;
+package io.confluent.ps.connect.signavio.model;
 
 public class Model {
     public String model_id;

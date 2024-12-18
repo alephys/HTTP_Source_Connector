@@ -1,16 +1,15 @@
-package io.confluent.connect.http.connector;
+package io.confluent.ps.connect.signavio.connector;
 
-import io.confluent.connect.http.OffsetManager.HttpSourceOffsetManager;
-import io.confluent.connect.http.model.Directory;
-import io.confluent.connect.http.model.Model;
-import org.apache.kafka.common.protocol.types.Field;
+import io.confluent.ps.connect.signavio.OffsetManager.HttpSourceOffsetManager;
+import io.confluent.ps.connect.signavio.model.Directory;
+import io.confluent.ps.connect.signavio.model.Model;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-import io.confluent.connect.http.resources.TimeCheck;
-import io.confluent.connect.http.Logger.ConnectorLogger;
-import io.confluent.connect.http.Signavio.SignavioAPI;
-import static io.confluent.connect.http.Schemas.Schemas.*;
+import io.confluent.ps.connect.signavio.resources.TimeCheck;
+import io.confluent.ps.connect.signavio.Logger.ConnectorLogger;
+import io.confluent.ps.connect.signavio.Signavio.SignavioAPI;
+import static io.confluent.ps.connect.signavio.Schemas.Schemas.*;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,8 +18,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
-public class HttpSourceTask1 extends SourceTask {
-    private static final ConnectorLogger log = ConnectorLogger.getLogger(HttpSourceTask1.class);
+public class ProcessdataTask extends SourceTask {
+    private static final ConnectorLogger log = ConnectorLogger.getLogger(ProcessdataTask.class);
     private String dir_topic;
     private String model_topic;
     private String httpEndpoint;
@@ -35,7 +34,7 @@ public class HttpSourceTask1 extends SourceTask {
     private SignavioAPI signavioApi;
     private HttpSourceOffsetManager offsetManager;
     private Instant lastTimestamp;
-    private HttpSourceConfig config;
+    private ProcessdataConfig config;
 
 
 
@@ -47,7 +46,7 @@ public class HttpSourceTask1 extends SourceTask {
     @Override
     public void start(Map<String, String> props) {
         log.info("Starting HttpSourceTask with provided configuration...");
-        config = new HttpSourceConfig(props);
+        config = new ProcessdataConfig(props);
         this.dir_topic = config.getTopic();
         this.model_topic = config.getModelTopic();
         this.httpEndpoint = config.getHttpEndpoint();

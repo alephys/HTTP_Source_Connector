@@ -1,6 +1,6 @@
-package io.confluent.connect.http.resources;
+package io.confluent.ps.connect.signavio.resources;
 
-import io.confluent.connect.http.Logger.ConnectorLogger;
+import io.confluent.ps.connect.signavio.Logger.ConnectorLogger;
 
 import java.time.Duration;
 import java.time.Instant;

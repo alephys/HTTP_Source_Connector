@@ -1,4 +1,4 @@
-package io.confluent.connect.http.Signavio;
+package io.confluent.ps.connect.signavio.Signavio;
 
 import okhttp3.*;
 import org.json.JSONObject;

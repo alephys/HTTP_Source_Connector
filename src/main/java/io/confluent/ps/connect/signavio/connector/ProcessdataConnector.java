@@ -1,5 +1,6 @@
-package io.confluent.connect.http.connector;
+package io.confluent.ps.connect.signavio.connector;
 
+import io.confluent.ps.connect.signavio.Logger.ConnectorLogger;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
@@ -8,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class HttpSourceConnector extends SourceConnector {
+public class ProcessdataConnector extends SourceConnector {
     private Map<String, String> configProps;
+    private static final ConnectorLogger log = ConnectorLogger.getLogger(ProcessdataConnector.class);
 
     @Override
     public String version() {
@@ -19,11 +21,13 @@ public class HttpSourceConnector extends SourceConnector {
     @Override
     public void start(Map<String, String> props) {
         this.configProps = props;
+        log.info("Connector has been started");
     }
 
     @Override
     public Class<? extends Task> taskClass() {
-        return HttpSourceTask.class;
+        log.info("Task has been started");
+        return ProcessdataTask.class;
     }
 
     @Override
@@ -37,10 +41,11 @@ public class HttpSourceConnector extends SourceConnector {
 
     @Override
     public void stop() {
+        log.info("Connector has been stopped");
     }
 
     @Override
     public ConfigDef config() {
-        return HttpSourceConfig.config();
+        return ProcessdataConfig.config();
     }
 }

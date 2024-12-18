@@ -68,7 +68,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>io.confluent.connect.http.connector.HttpSourceConnector</mainClass>
+                                    <mainClass>io.confluent.ps.connect.signavio.connector.ProcessdataConnector</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

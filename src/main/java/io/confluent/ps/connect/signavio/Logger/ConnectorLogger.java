@@ -1,4 +1,4 @@
-package io.confluent.connect.http.Logger;
+package io.confluent.ps.connect.signavio.Logger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

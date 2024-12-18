@@ -1,4 +1,4 @@
-package io.confluent.connect.http.OffsetManager;
+package io.confluent.ps.connect.signavio.OffsetManager;
 
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
