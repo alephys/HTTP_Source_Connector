@@ -4,6 +4,8 @@ import okhttp3.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -17,15 +19,22 @@ public class SignavioAPI {
     private Map<String, String> dictionaryCache = new HashMap<>();
     private String authToken;
     private String jsessionId;
-    private OkHttpClient client;
+    private Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("auswgvse.service.anz", 80));
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .proxy(proxy)
+            .build();
+    private int retries = 1;
+    //private OkHttpClient client;
+
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType JSON_AUTHENTICATE  = MediaType.parse("application/x-www-form-urlencoded");
 
     // Constructor
     public SignavioAPI(String baseUrl, String workspaceId) {
         this.baseUrl = baseUrl;
         this.workspaceId = workspaceId;
-        this.client = new OkHttpClient();
+      //  this.client = new OkHttpClient();
     }
 
     // Authenticate method
@@ -35,10 +44,10 @@ public class SignavioAPI {
                 .put("name", username)
                 .put("password", password)
                 .put("tokenonly", "true")
-                .put("tenant", this.workspaceId)
+                //.put("tenant", this.workspaceId)
                 .toString();
 
-        RequestBody body = RequestBody.create(json, JSON);
+        RequestBody body = RequestBody.create(json, JSON_AUTHENTICATE);
         Request request = new Request.Builder()
                 .url(loginUrl)
                 .post(body)
@@ -47,6 +56,7 @@ public class SignavioAPI {
         try{
             Response response = client.newCall(request).execute();
             String responseBody = response.body().string();
+            log.info("response body "+ responseBody);
             this.authToken = responseBody;  // authToken is in the response body
             this.jsessionId = response.header("JSESSIONID"); // Assuming JSESSIONID is in header
             switch (response.code()){
@@ -60,8 +70,13 @@ public class SignavioAPI {
                     log.error("HTTP Error "+response.code()+": Forbidden");
                 default:
                     log.error("Unknown Error: Sleeping 5 seconds before retrying");
+                    log.error(responseBody);
+                    log.error(String.valueOf(response.code()));
                     Thread.sleep(5000);
-                    authenticate(username,password);
+                    if (retries == 3) {
+                        authenticate(username, password);
+                        retries += 1 ;
+                    }
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -69,7 +84,7 @@ public class SignavioAPI {
     }
     // retrieve root directory id
     public String retrieveRootDiagramsInFolder(String topLevelDirId) throws IOException {
-        String url = this.baseUrl + "/p/directory" + topLevelDirId;
+        String url = this.baseUrl + "/p/directory/" + topLevelDirId;
         return apiGet(url);
     }
     // Retrieve diagrams in a folder

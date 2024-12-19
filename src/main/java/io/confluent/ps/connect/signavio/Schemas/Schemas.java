@@ -79,7 +79,6 @@ public class Schemas {
             .field(MODEL_NAME, Schema.STRING_SCHEMA)
             .field(COMMENT, Schema.STRING_SCHEMA)
             .field(MODELLER, Schema.STRING_SCHEMA)
-            .field(PUBLISHED_DATE, Schema.STRING_SCHEMA)
             .field(LAST_EDIT, Schema.STRING_SCHEMA)
             .field(PARENT, Schema.BOOLEAN_SCHEMA)
             .field(FOLDER_NAME, Schema.STRING_SCHEMA)

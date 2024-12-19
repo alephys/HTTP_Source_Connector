@@ -2,6 +2,7 @@ package io.confluent.ps.connect.signavio.connector;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.common.config.types.Password;
 
 import java.util.Map;
 
@@ -65,7 +66,8 @@ public class ProcessdataConfig extends AbstractConfig {
     }
 
     public String getPassword() {
-        return this.getString(PASSWORD);
+        Password password = this.getPassword(PASSWORD);
+        return password.value();
     }
 
     public String getTenantId() {
@@ -80,6 +82,6 @@ public class ProcessdataConfig extends AbstractConfig {
 
     public String getDlqTopic() {return this.getString(DLQ_TOPIC_CONFIG);}
 
-    public String getDlqReportErrors() {return this.getString(DLQ_REPORT_ERRORS_CONFIG);}
+    public Boolean getDlqReportErrors() {return this.getBoolean(DLQ_REPORT_ERRORS_CONFIG);}
 
 }

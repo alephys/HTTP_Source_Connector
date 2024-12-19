@@ -3,13 +3,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.confluent.connect.http</groupId>
-    <artifactId>http-source-connector</artifactId>
+    <groupId>io.confluent.ps.connect.signavio</groupId>
+    <artifactId>Signavio-ProcessData-Connector</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>HTTP Source Connector</name>
-    <description>Custom Kafka Connect HTTP Source Connector</description>
+    <name>Signavio ProcessData Connector</name>
+    <description>Custom Kafka Connect for Signavio ProcessData Source Connector</description>
     <url></url>
 
     <properties>

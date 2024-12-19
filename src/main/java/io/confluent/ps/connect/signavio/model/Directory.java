@@ -1,4 +1,7 @@
 package io.confluent.ps.connect.signavio.model;
+import org.apache.kafka.connect.data.Struct;
+
+import static io.confluent.ps.connect.signavio.Schemas.Schemas.DIRECTORY_DATA_SCHEMA;
 
 public class Directory {
     private String rel;
@@ -115,21 +118,22 @@ public class Directory {
         this.nameEn = nameEn;
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-                "\"rel\": \"" + rel + "\"," +
-                "\"href\": \"" + directory_id + "\"," +
-                "\"parent\": \"" + parent + "\"," +
-                "\"allowedMimeTypeRegex\": \"" + allowedMimeTypeRegex + "\"," +
-                "\"parentName\": \"" + parentName + "\"," +
-                "\"deleted\": " + deleted + "," +
-                "\"visible\": " + visible + "," +
-                "\"created\": \"" + created + "\"," +
-                "\"name\": \"" + name + "\"," +
-                "\"description\": \"" + description + "\"," +
-                "\"nameEn\": \"" + nameEn + "\"" +
-                "}";
+
+    public Struct toStruct() {
+        Struct directoryData = new Struct(DIRECTORY_DATA_SCHEMA)
+                .put("rel", "self")
+                .put("href", "/api/v1/directory")
+                .put("parent", "root")
+                .put("allowedMimeTypeRegex", ".*")
+                .put("parentName", "rootDir")
+                .put("deleted", false)
+                .put("visible", true)
+                .put("created", "2024-12-19T12:00:00Z")
+                .put("name", "My Directory")
+                .put("description", "Example directory data")
+                .put("name_en", "My Directory EN");
+
+        return directoryData;
     }
 
 

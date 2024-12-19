@@ -1,9 +1,11 @@
 package io.confluent.ps.connect.signavio.connector;
 
 import io.confluent.ps.connect.signavio.OffsetManager.HttpSourceOffsetManager;
+import io.confluent.ps.connect.signavio.Schemas.Schemas;
 import io.confluent.ps.connect.signavio.model.Directory;
 import io.confluent.ps.connect.signavio.model.Model;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import io.confluent.ps.connect.signavio.resources.TimeCheck;
@@ -60,7 +62,7 @@ public class ProcessdataTask extends SourceTask {
         this.PUBLISHED_ROOT_ID = config.getPublishedRootId();
         this.RETIRED_ROOT_ID = config.getRetiredRootId();
         Map<String, Object> highWatermark = offsetManager.getHighWatermark();
-        lastTimestamp = (Instant) highWatermark.get("timestamp");
+        lastTimestamp = Instant.ofEpochMilli((Long) highWatermark.get("timestamp"));
         nextUri = (String) highWatermark.get("nextUri");
         log.info("HttpSourceTask started successfully with endpoint: {}");
     }
@@ -87,7 +89,7 @@ public class ProcessdataTask extends SourceTask {
             log.info("Polling completed with "+records.size()+" records." );
         } catch (Exception e) {
             log.error("Error during polling. Details: "+ e.getMessage());
-            handleDLQ(e,"Error during polling.");
+            handleDLQ(e,"Error during polling.",records);
         }
         return records;
     }
@@ -263,11 +265,11 @@ public class ProcessdataTask extends SourceTask {
     }
 
     private SourceRecord createSourceRecordForDirectory(Directory dir,String key,String value,String nextUri) {
-        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), dir_topic,KEY_SCHEMA,dir.getDirectory_id(), DIRECTORY_DATA_SCHEMA, dir.toString());
+        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), dir_topic,KEY_SCHEMA,directoryRecordKey(dir), DIRECTORY_DATA_SCHEMA, directoryRecordValue(dir));
     }
 
     private SourceRecord createSourceRecordForModel(Model model, String key, String value, String nextUri) {
-        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), model_topic,KEY_SCHEMA, model.getModel_id(), MODEL_DATA_SCHEMA, model.toString());
+        return new SourceRecord(sourcePartition(key,value), offsetManager.createOffset(System.currentTimeMillis(),nextUri), model_topic,KEY_SCHEMA, ModelRecordKey(model), MODEL_DATA_SCHEMA, model.toString());
     }
 
     private Map<String, String> sourcePartition(String key,String value) {
@@ -275,9 +277,73 @@ public class ProcessdataTask extends SourceTask {
         partition.put(key, value);
         return partition;
     }
+    private Struct directoryRecordKey(Directory dir){
+        // Key Schema
+        Struct key = new Struct(KEY_SCHEMA)
+                .put("id", dir.getDirectory_id());
+        return key;
+    }
 
-    private void handleDLQ(Exception exception, String failedData) {
-        Boolean dlq = Boolean.parseBoolean(config.getDlqReportErrors());
+    private Struct ModelRecordKey(Model model){
+        // Key Schema
+        Struct key = new Struct(KEY_SCHEMA)
+                .put("id", model.getModel_id());
+        return key;
+    }
+
+    public Struct directoryRecordValue(Directory dir){
+        Struct directoryValue = new Struct(DIRECTORY_DATA_SCHEMA)
+                .put("rel",dir.getRel())
+                .put("href",dir.getDirectory_id())
+                .put("parent",dir.getParent())
+                .put("allowedMimeTypeRegex",dir.getAllowedMimeTypeRegex())
+                .put("parentName",dir.getParentName())
+                .put("deleted",dir.getDeleted())
+                .put("visible",dir.getVisible())
+                .put("created",dir.getCreated())
+                .put("name",dir.getName())
+                .put("description",dir.getDescription())
+                .put("name_en",dir.getNameEn());
+        return directoryValue;
+    }
+
+    public Struct ModelRecordValue(Model model){
+        Struct modelValue = new Struct(MODEL_DATA_SCHEMA)
+                .put("model_id", model.getModel_id())
+                .put("name", model.getModel_name())
+                .put("published_date", model.getPublished_date())
+                .put("published_revision", model.getPublished_revision())
+                .put("published_revision_number", model.getPublished_revision_number())
+                .put("model_name", "Process Model")
+                .put("comment", "This is a sample comment.")
+                .put("modeller", "John Doe")
+                .put("last_edit", "2023-12-18")
+                .put("parent", false)
+                .put("folder_name", "Root Folder")
+                .put("stencil_set", new Struct(MODEL_DATA_SCHEMA.field("stencil_set").schema())
+                        .put("name_space", "namespace.example.com")
+                        .put("url", model.getStencil_set().getUrl()))
+                .put("process_owner", model.getProcess_owner())
+                .put("process_owner_email", model.getProcess_owner_email())
+                .put("assurance_lead", model.getAssurance_lead())
+                .put("assurance_lead_email", model.getAssurance_lead_email())
+                .put("e2e_process_owner", model.getE2e_process_owner())
+                .put("e2e_process_owner_email", model.getE2e_process_owner_email())
+                .put("process_type", model.getProcess_type())
+                .put("pcf_id", model.getPcf_id())
+                .put("critical_operations", model.getCritical_operations())
+                .put("last_attestation_date", model.getLast_attestation_date())
+                .put("critical_operationals_categaories", model.getCritical_operations_categories())
+                .put("documentation", model.getDocumentation())
+                .put("division", model.getDivision())
+                .put("division_code", model.getDivision_code());
+        return modelValue;
+    }
+
+
+
+    private List<SourceRecord> handleDLQ(Exception exception, String failedData,List<SourceRecord> records) {
+        Boolean dlq = config.getDlqReportErrors();
         if (dlq) {
             String dlqTopic = config.getDlqTopic();
             try {
@@ -293,13 +359,15 @@ public class ProcessdataTask extends SourceTask {
                         Schema.STRING_SCHEMA,
                         exception.getMessage()
                 );
-                //context.sendRecord(dlqRecord);
+                records.add(dlqRecord);
                 log.warn("Record sent to DLQ: "+ dlqRecord);
             } catch (Exception dlqException) {
                 log.error("Failed to send record to DLQ: "+ dlqException);
             }
         }
+        return records;
     }
+
 
     @Override
     public void stop() {
