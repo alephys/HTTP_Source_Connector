@@ -1,7 +1,6 @@
 package io.confluent.ps.connect.signavio.connector;
 
 import io.confluent.ps.connect.signavio.OffsetManager.HttpSourceOffsetManager;
-import io.confluent.ps.connect.signavio.Schemas.Schemas;
 import io.confluent.ps.connect.signavio.model.Directory;
 import io.confluent.ps.connect.signavio.model.Model;
 import org.apache.kafka.connect.data.Schema;
@@ -11,7 +10,7 @@ import org.apache.kafka.connect.source.SourceTask;
 import io.confluent.ps.connect.signavio.resources.TimeCheck;
 import io.confluent.ps.connect.signavio.Logger.ConnectorLogger;
 import io.confluent.ps.connect.signavio.Signavio.SignavioAPI;
-import static io.confluent.ps.connect.signavio.Schemas.Schemas.*;
+import static io.confluent.ps.connect.signavio.schemas.Schemas.*;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -57,7 +56,7 @@ public class ProcessdataTask extends SourceTask {
         this.USERNAME = config.getUserName();
         this.PASSWORD = config.getPassword();
         this.TENANT_ID = config.getTenantId();
-        this.signavioApi = new SignavioAPI(httpEndpoint, TENANT_ID);
+        this.signavioApi = new SignavioAPI(httpEndpoint, TENANT_ID, config);
         this.offsetManager = new HttpSourceOffsetManager(context,httpEndpoint);
         this.PUBLISHED_ROOT_ID = config.getPublishedRootId();
         this.RETIRED_ROOT_ID = config.getRetiredRootId();

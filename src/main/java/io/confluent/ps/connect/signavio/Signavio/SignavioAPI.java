@@ -1,5 +1,7 @@
 package io.confluent.ps.connect.signavio.Signavio;
 
+
+import io.confluent.ps.connect.signavio.connector.ProcessdataConfig;
 import okhttp3.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -19,22 +21,35 @@ public class SignavioAPI {
     private Map<String, String> dictionaryCache = new HashMap<>();
     private String authToken;
     private String jsessionId;
-    private Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("auswgvse.service.anz", 80));
-    private OkHttpClient client = new OkHttpClient.Builder()
-            .proxy(proxy)
-            .build();
+    private static Proxy proxy;
     private int retries = 1;
-    //private OkHttpClient client;
+    private OkHttpClient client;
+    private ProcessdataConfig config;
+    private String proxy_url;
 
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType JSON_AUTHENTICATE  = MediaType.parse("application/x-www-form-urlencoded");
 
     // Constructor
-    public SignavioAPI(String baseUrl, String workspaceId) {
+    public SignavioAPI(String baseUrl, String workspaceId,ProcessdataConfig config) {
         this.baseUrl = baseUrl;
         this.workspaceId = workspaceId;
-      //  this.client = new OkHttpClient();
+        this.config = config;
+        this.proxy_url = config.getProxyUrl();
+        boolean proxy_yn = config.getProxy();
+        this.client = check(proxy_yn);
+    }
+    public OkHttpClient check(boolean b){
+        if(b){
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxy_url, 80));
+            client = new OkHttpClient.Builder()
+                    .proxy(proxy)
+                    .build();
+            return client;
+        }else{
+            return new OkHttpClient();
+        }
     }
 
     // Authenticate method
@@ -44,7 +59,7 @@ public class SignavioAPI {
                 .put("name", username)
                 .put("password", password)
                 .put("tokenonly", "true")
-                //.put("tenant", this.workspaceId)
+                .put("tenant", this.workspaceId)
                 .toString();
 
         RequestBody body = RequestBody.create(json, JSON_AUTHENTICATE);
@@ -82,6 +97,7 @@ public class SignavioAPI {
             log.error(e.getMessage());
         }
     }
+
     // retrieve root directory id
     public String retrieveRootDiagramsInFolder(String topLevelDirId) throws IOException {
         String url = this.baseUrl + "/p/directory/" + topLevelDirId;

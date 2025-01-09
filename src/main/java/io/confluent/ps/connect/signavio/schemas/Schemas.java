@@ -1,4 +1,4 @@
-package io.confluent.ps.connect.signavio.Schemas;
+package io.confluent.ps.connect.signavio.schemas;
 
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;

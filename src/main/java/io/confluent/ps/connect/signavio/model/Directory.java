@@ -1,7 +1,7 @@
 package io.confluent.ps.connect.signavio.model;
 import org.apache.kafka.connect.data.Struct;
 
-import static io.confluent.ps.connect.signavio.Schemas.Schemas.DIRECTORY_DATA_SCHEMA;
+import static io.confluent.ps.connect.signavio.schemas.Schemas.DIRECTORY_DATA_SCHEMA;
 
 public class Directory {
     private String rel;

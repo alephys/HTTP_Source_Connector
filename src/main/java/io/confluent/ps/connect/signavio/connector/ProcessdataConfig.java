@@ -22,6 +22,11 @@ public class ProcessdataConfig extends AbstractConfig {
     public static final String DLQ_TOPIC_DEFAULT = "dlq";
     public static final String DLQ_REPORT_ERRORS_CONFIG = "dead.letter.queue.report.errors";
     public static final boolean DLQ_REPORT_ERRORS_DEFAULT = true;
+    public static final boolean PROXY_DEFAULT = false;
+    public static final String PROXY = "signavio.proxy";
+    public static final String PROXY_URL = "signavio.proxy.url";
+
+
 
 
     public ProcessdataConfig(Map<?, ?> originals) {
@@ -42,7 +47,9 @@ public class ProcessdataConfig extends AbstractConfig {
                 .define(PUBLISHED_ROOT_ID,ConfigDef.Type.STRING,ConfigDef.Importance.HIGH,"Root DirectoryId for published model")
                 .define(RETIRED_ROOT_ID,ConfigDef.Type.STRING,ConfigDef.Importance.HIGH,"Root DirectoryId for retired model")
                 .define(DLQ_TOPIC_CONFIG, ConfigDef.Type.STRING, DLQ_TOPIC_DEFAULT, ConfigDef.Importance.HIGH, "Topic to write failed records.")
-                .define(DLQ_REPORT_ERRORS_CONFIG, ConfigDef.Type.BOOLEAN, DLQ_REPORT_ERRORS_DEFAULT, ConfigDef.Importance.MEDIUM, "Enable reporting of errors to the DLQ.");
+                .define(DLQ_REPORT_ERRORS_CONFIG, ConfigDef.Type.BOOLEAN, DLQ_REPORT_ERRORS_DEFAULT, ConfigDef.Importance.MEDIUM, "Enable reporting of errors to the DLQ.")
+                .define(PROXY, ConfigDef.Type.BOOLEAN, PROXY_DEFAULT, ConfigDef.Importance.MEDIUM, "Enable Proxy.")
+                .define(PROXY_URL, ConfigDef.Type.BOOLEAN, null, ConfigDef.Importance.MEDIUM, "Proxy URL.");
     }
 
     public String getTopic() {
@@ -83,5 +90,9 @@ public class ProcessdataConfig extends AbstractConfig {
     public String getDlqTopic() {return this.getString(DLQ_TOPIC_CONFIG);}
 
     public Boolean getDlqReportErrors() {return this.getBoolean(DLQ_REPORT_ERRORS_CONFIG);}
+
+    public Boolean getProxy() {return this.getBoolean(PROXY);}
+
+    public String getProxyUrl() {return this.getString(PROXY_URL);}
 
 }
